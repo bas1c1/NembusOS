@@ -123,11 +123,14 @@ void input(char data[]) {
 			}
 
 			if (keycode == 0x1C) {
-				keycode = 0;
+        putchar('\n');
+				break;
 			}
+
 			if(keycode == 0x0E) {
 				delsym();
-				*dataPtr-- = '\0';
+				*(dataPtr-1) = '\0';
+        dataPtr -= 1;
 			} else {
 				if (capslock == true || shift == true) {
 					putchar(Capskeyboard_map[keycode]);

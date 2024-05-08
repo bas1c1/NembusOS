@@ -31,9 +31,8 @@ void clear_line(unsigned char *p)
 
 void scroll_up()
 {
-	//#error IMPLEMENT THIS FUCKING SHIT U STUPID MF
-	//memcpy(vidmem, vidmem + (VGA_COLUMNS_IN_LINE * VGA_BYTES_FOR_EACH_ELEMENT), SCREENSIZE - (VGA_COLUMNS_IN_LINE * BYTES_FOR_EACH_ELEMENT));
-	//clear_line((unsigned char *)(vidmem + VGA_SCREENSIZE - (VGA_COLUMNS_IN_LINE * VGA_BYTES_FOR_EACH_ELEMENT)));
+	memcpy(vidmem, vidmem + (VGA_COLUMNS_IN_LINE * VGA_BYTES_FOR_EACH_ELEMENT), VGA_SCREENSIZE - (VGA_COLUMNS_IN_LINE * VGA_BYTES_FOR_EACH_ELEMENT));
+	clear_line((unsigned char *)(vidmem + VGA_SCREENSIZE - (VGA_COLUMNS_IN_LINE * VGA_BYTES_FOR_EACH_ELEMENT)));
 }
 
 void putchar(char ch)
@@ -48,7 +47,7 @@ void putchar(char ch)
 	i++;
 	vidmem[i] = VGA_DEFAULT_COLOR;
 	//cursor_x += VGA_BYTES_FOR_EACH_ELEMENT;
-	scroll();
+	//scroll();
 	vga_set_cursor_pos(cursor_x + VGA_BYTES_FOR_EACH_ELEMENT, cursor_y);
 }
 
@@ -56,7 +55,7 @@ void newline()
 {
 	if (cursor_y >= VGA_LINES - 1)
 	{
-		scroll();
+		scroll_up();
 		vga_set_cursor_pos(0, cursor_y);
 	}
 	else

@@ -102,73 +102,46 @@ void free_frame(page_t *page)
 
 void initialise_paging()
 {
-   uint32_t mem_end_page = 0x1000000;
+    uint32_t mem_end_page = 0x1000000;
+    
+    nframes = mem_end_page / 0x1000;
+    frames = (uint32_t*)kmalloc(INDEX_FROM_BIT(nframes));
+    memset((uint8_t *)frames, 0, INDEX_FROM_BIT(nframes));
+    
+    uint32_t phys;
+    kernel_directory = (page_directory_t*)kmalloc_a(sizeof(page_directory_t));
+    memset((uint8_t *)kernel_directory, 0, sizeof(page_directory_t));
+    kernel_directory->physicalAddr = (uint32_t)kernel_directory->tablesPhysical;
 
-   nframes = mem_end_page / 0x1000;
-   frames = (uint32_t*)kmalloc(INDEX_FROM_BIT(nframes));
-   memset(frames, 0, INDEX_FROM_BIT(nframes));
+    int i = 0;
+    for (i = KHEAP_START; i < KHEAP_START+KHEAP_INITIAL_SIZE; i += 0x1000)
+        get_page(i, 1, kernel_directory);
 
-   kernel_directory = (page_directory_t*)kmalloc_a(sizeof(page_directory_t));
-   memset(kernel_directory, 0, sizeof(page_directory_t));
-   kernel_directory->physicalAddr = (uint32_t)kernel_directory->tablesPhysical;
-   current_directory = kernel_directory;
+    i = 0;
+    while (i < 0x400000 ) //placement_address+0x1000)
+    {
+        alloc_frame( get_page(i, 1, kernel_directory), 0, 0);
+        i += 0x1000;
+    }
 
-   for (int i = KHEAP_START; i < KHEAP_START+KHEAP_INITIAL_SIZE; i += 0x1000)
-      get_page(i, 1, kernel_directory);
+    for (i = KHEAP_START; i < KHEAP_START+KHEAP_INITIAL_SIZE; i += 0x1000)
+        alloc_frame( get_page(i, 1, kernel_directory), 0, 0);
 
-   int i = 0;
-   while (i < 0x400000)
-   {
-       // Kernel code is readable but not writeable from userspace.
-       alloc_frame( get_page(i, 1, kernel_directory), 0, 0);
-       i += 0x1000;
-   }
+    irq_install_handler(14, page_fault);
 
-   for (int i = KHEAP_START; i < KHEAP_START+KHEAP_INITIAL_SIZE; i += 0x1000)
-       alloc_frame( get_page(i, 1, kernel_directory), 0, 0);
+    switch_page_directory(kernel_directory);
+    kheap = create_heap(KHEAP_START, KHEAP_START+KHEAP_INITIAL_SIZE, 0xCFFFF000, 0, 0);
 
-   irq_install_handler(14, page_fault);
-   switch_page_directory(kernel_directory);
+    current_directory = clone_directory(kernel_directory);
 
-   kheap = create_heap(KHEAP_START, KHEAP_START+KHEAP_INITIAL_SIZE, 0xCFFFF000, 0, 0);
-
-   current_directory = clone_directory(kernel_directory);
-   switch_page_directory(current_directory);
-   
-   /*
-	uint32_t **dir = (uint32_t **)kmalloc_a(4096);
-	uint32_t *table = (uint32_t *)kmalloc_a(4096);
-
-	memset(dir, 0, 4096);
-	memset(table, 0, 4096);
-
-
-	uint32_t i = 0;  // current page descriptor within the table
-	uint32_t addr = 0;  // current address
-	while (i < 1024)
-	{
-		table[i] = addr | 3;  // RW + Supervisor + Present
-		addr += 4096;
-		i++;
-	}
-
-	irq_install_handler(14, page_fault);
-
-	dir[0] = (uint32_t *)((uint32_t)table | 3); // RW + Supervisor + Present
-
-	asm volatile("mov %0, %%cr3":: "r"(dir));
-	uint32_t cr0;
-	asm volatile("mov %%cr0, %0": "=r"(cr0));
-	cr0 |= 0x80000000; // Enable paging!
-	asm volatile("mov %0, %%cr0":: "r"(cr0));
-	*/
+    switch_page_directory(current_directory);
 }
 
 void switch_page_directory(page_directory_t *dir)
 {
    current_directory = dir;
 
-   asm volatile("mov %0, %%cr3":: "r"(&dir->tablesPhysical));
+   asm volatile("mov %0, %%cr3":: "r"(dir->tablesPhysical));
    uint32_t cr0;
    asm volatile("mov %%cr0, %0": "=r"(cr0));
    cr0 |= 0x80000000; // Enable paging!
@@ -187,6 +160,7 @@ page_t *get_page(uint32_t address, int make, page_directory_t *dir)
    {
        uint32_t tmp;
        dir->tables[table_idx] = (page_table_t*)kmalloc_ap(sizeof(page_table_t), &tmp);
+
        memset(dir->tables[table_idx], 0, 0x1000);
        dir->tablesPhysical[table_idx] = tmp | 0x7; // PRESENT, RW, US.
        return &dir->tables[table_idx]->pages[address%1024];
@@ -222,7 +196,9 @@ void page_fault(struct regs *regs_var)
 
 static page_table_t *clone_table(page_table_t *src, uint32_t *physAddr)
 {
+
     page_table_t *table = (page_table_t*)kmalloc_ap(sizeof(page_table_t), physAddr);
+
     memset((uint8_t *)table, 0, sizeof(page_directory_t));
 
     int i;
@@ -264,14 +240,18 @@ page_directory_t *clone_directory(page_directory_t *src)
         {
             dir->tables[i] = src->tables[i];
             dir->tablesPhysical[i] = src->tablesPhysical[i];
+
         }
         else
         {
             // Copy the table.
             uint32_t phys;
+
             dir->tables[i] = clone_table(src->tables[i], &phys);
+
             dir->tablesPhysical[i] = phys | 0x07;
         }
     }
+
     return dir;
 }

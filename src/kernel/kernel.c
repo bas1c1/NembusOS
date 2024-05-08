@@ -18,6 +18,12 @@ extern uint32_t placement_address;
 
 void _kmain(unsigned long magic, unsigned long addr)
 {
+	MULTIBOOT_INFO *mb = (MULTIBOOT_INFO *)addr;
+	uint32_t initrd_location = *(uint32_t*)(mb->modules_addr);
+	uint32_t initrd_end = *(uint32_t*)(mb->modules_addr+4);
+	placement_address = initrd_end;
+	ASSERT(mb->modules_count > 0);
+
 	cls();
 	vga_set_cursor_pos(0, 0);
 	printf("Booting NembusOS!\n\n");
@@ -30,14 +36,8 @@ void _kmain(unsigned long magic, unsigned long addr)
     
 	__asm__ __volatile__ ("sti");
 
-	MULTIBOOT_INFO *mb = (MULTIBOOT_INFO *)addr;
-	ASSERT(mb->modules_count > 0);
-
-	uint32_t initrd_location = *(uint32_t*)(mb->modules_addr);
-	uint32_t initrd_end = *(uint32_t*)(mb->modules_addr+4);
-	placement_address = initrd_end;
-	
 	initialise_paging();
+
 	fs_root = initialise_initrd(initrd_location);
 
     // list the contents of /
@@ -68,7 +68,7 @@ void _kmain(unsigned long magic, unsigned long addr)
     //volatile uint32_t *ptr = (uint32_t*)0xA0000000;
     //volatile uint32_t do_page_fault = *ptr;
 	for(;;) {
-	asm("hlt");
+	    asm("hlt");
 	}
 	//input(a);
 	//newline();

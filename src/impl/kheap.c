@@ -9,6 +9,36 @@ extern uint32_t end;
 uint32_t placement_address = (uint32_t)&end;
 heap_t *kheap = 0;
 
+uint32_t kmalloc_int(uint32_t sz, int align, uint32_t *phys)
+{
+    if (kheap != 0)
+    {
+        void *addr = alloc(sz, (uint8_t)align, kheap);
+        if (phys != 0)
+        {
+            page_t *page = get_page((uint32_t)addr, 0, kernel_directory);
+            *phys = page->frame*0x1000 + ((uint32_t)addr&0xFFF);
+        }
+        return (uint32_t)addr;
+    }
+    else
+    {
+        if (align == 1 && (placement_address & 0x00000FFF) )
+        {
+            // Align the placement address;
+            placement_address &= 0xFFFFF000;
+            placement_address += 0x1000;
+        }
+        if (phys)
+        {
+            *phys = placement_address;
+        }
+        uint32_t tmp = placement_address;
+        placement_address += sz;
+        return tmp;
+    }
+}
+
 uint32_t kmalloc(uint32_t sz)
 {
 	if (kheap != 0)
@@ -24,6 +54,11 @@ uint32_t kmalloc(uint32_t sz)
 
 uint32_t kmalloc_a(uint32_t sz)
 {
+    if (kheap != 0)
+    {
+        void *addr = alloc(sz, (uint8_t)1, kheap);
+        return (uint32_t)addr;
+    }
   if ((placement_address & 0x00000FFF)) // If the address is not already page-aligned
   {
     // Align it.
@@ -37,6 +72,11 @@ uint32_t kmalloc_a(uint32_t sz)
 
 uint32_t kmalloc_p(uint32_t sz, uint32_t *phys)
 {
+    if (kheap != 0)
+    {
+        void *addr = alloc(sz, (uint8_t)0, kheap);
+        return (uint32_t)addr;
+    }
   if (phys)
   {
     *phys = placement_address;
@@ -48,6 +88,15 @@ uint32_t kmalloc_p(uint32_t sz, uint32_t *phys)
 
 uint32_t kmalloc_ap(uint32_t sz, uint32_t *phys)
 {
+    //BUG, NEED TO FIX
+    /*
+    if (kheap != 0)
+    {
+        void *addr = alloc(sz, (uint8_t)1, kheap);
+
+        return (uint32_t)addr;
+    }
+    */
   if ((placement_address & 0x00000FFF)) // If the address is not already page-aligned
   {
     // Align it.
@@ -65,10 +114,12 @@ uint32_t kmalloc_ap(uint32_t sz, uint32_t *phys)
 
 static int32_t find_smallest_hole(uint32_t size, uint8_t page_align, heap_t *heap)
 {
+
    uint32_t iterator = 0;
    while (iterator < heap->index.size)
    {
        header_t *header = (header_t *)lookup_ordered_array(iterator, &heap->index);
+
        // If the user has requested the memory be page-aligned
        if (page_align > 0)
        {
@@ -179,6 +230,7 @@ void *alloc(uint32_t size, uint8_t page_align, heap_t *heap)
 
     if (iterator == -1)
     {
+
         uint32_t old_length = heap->end_address - heap->start_address;
         uint32_t old_end_address = heap->end_address;
 
@@ -224,6 +276,8 @@ void *alloc(uint32_t size, uint8_t page_align, heap_t *heap)
     uint32_t orig_hole_pos = (uint32_t)orig_hole_header;
     uint32_t orig_hole_size = orig_hole_header->size;
 
+
+
     if (orig_hole_size-new_size < sizeof(header_t)+sizeof(footer_t))
     {
         size += orig_hole_size-new_size;
@@ -232,6 +286,7 @@ void *alloc(uint32_t size, uint8_t page_align, heap_t *heap)
 
     if (page_align && orig_hole_pos&0xFFFFF000)
     {
+
         uint32_t new_location   = orig_hole_pos + 0x1000 - (orig_hole_pos&0xFFF) - sizeof(header_t);
         header_t *hole_header = (header_t *)orig_hole_pos;
         hole_header->size     = 0x1000 - (orig_hole_pos&0xFFF) - sizeof(header_t);
@@ -242,6 +297,7 @@ void *alloc(uint32_t size, uint8_t page_align, heap_t *heap)
         hole_footer->header   = hole_header;
         orig_hole_pos         = new_location;
         orig_hole_size        = orig_hole_size - hole_header->size;
+
     }
     else
     {
@@ -268,7 +324,9 @@ void *alloc(uint32_t size, uint8_t page_align, heap_t *heap)
             hole_footer->magic = HEAP_MAGIC;
             hole_footer->header = hole_header;
         }
+
         insert_ordered_array((void*)hole_header, &heap->index);
+
     }
     
     return (void *) ( (uint32_t)block_header+sizeof(header_t) );

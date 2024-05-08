@@ -28,6 +28,7 @@ enum vga_colour {
 
 #include "stddef.h"
 #include "io.h"
+#include "memory.h"
 
 static inline uint8_t vga_entry_colour(enum vga_colour foreground, enum vga_colour background){
     return foreground | (background << 4);

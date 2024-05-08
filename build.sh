@@ -38,10 +38,10 @@ sudo cp build/NembusOS.bin isodir/NembusOS.bin
 gcc ramdisk.c -o ramdisk.out
 sudo ./ramdisk.out initrd/a.txt hello.txt
 
-sudo rm -rf build/NembusOS.bin build/kernel.o build/initrd.o build/vfs.o build/procasm.o build/assert.o build/ordarray.o build/kheap.o build/paging.o build/isr.o build/timer.o build/israsm.o build/gdt.o build/gdtasm.o build/keyboard.o build/cmos.o build/boot.o build/string.o build/io.o build/memory.o build/vga.o build/std.o ramdisk.out
+sudo rm -rf build/kernel.o build/initrd.o build/vfs.o build/procasm.o build/assert.o build/ordarray.o build/kheap.o build/paging.o build/isr.o build/timer.o build/israsm.o build/gdt.o build/gdtasm.o build/keyboard.o build/cmos.o build/boot.o build/string.o build/io.o build/memory.o build/vga.o build/std.o ramdisk.out
 
 sudo grub-mkrescue -o build/NembusOS.iso isodir
 
 sudo rm -rf isodir/NembusOS.bin isodir/initrd
 
-qemu-system-i386 -cdrom build/NembusOS.iso -m 512 -cpu max -no-reboot
+qemu-system-i386 -cdrom build/NembusOS.iso -m 512 -cpu max -no-reboot -d int

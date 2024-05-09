@@ -3,8 +3,11 @@
 
 #include "stddef.h"
 
-void *memset(void *s, int c, unsigned int len);
-void memcpy(void *dest, void *src, size_t n);
+//void *memset(void *s, int c, unsigned int len);
+//void memcpy(void *dest, void *src, size_t n);
+
+void memcpy(uint8_t *dest, const uint8_t *src, uint32_t len);
+void memset(uint8_t *dest, uint8_t val, uint32_t len);
 
 #define heap_size 25000
 

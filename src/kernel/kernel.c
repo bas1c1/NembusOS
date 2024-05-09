@@ -16,7 +16,7 @@
 
 extern uint32_t placement_address;
 
-void _kmain(unsigned long magic, unsigned long addr)
+void _kmain(unsigned long magic, unsigned long addr, uint32_t initial_stack)
 {
 	MULTIBOOT_INFO *mb = (MULTIBOOT_INFO *)addr;
 	uint32_t initrd_location = *(uint32_t*)(mb->modules_addr);
@@ -26,7 +26,10 @@ void _kmain(unsigned long magic, unsigned long addr)
 
 	cls();
 	vga_set_cursor_pos(0, 0);
-	printf("Booting NembusOS!\n\n");
+	printf("Booting NembusOS!\n\nInitial stack: ");
+	printfhex(initial_stack);
+	newline();
+	newline();
 
 	gdt_install();
     idt_install();
@@ -37,7 +40,7 @@ void _kmain(unsigned long magic, unsigned long addr)
 	__asm__ __volatile__ ("sti");
 
 	initialise_paging();
-
+	
 	fs_root = initialise_initrd(initrd_location);
 
     // list the contents of /
@@ -47,6 +50,7 @@ void _kmain(unsigned long magic, unsigned long addr)
 	{
 	  printf("Found file ");
 	  printf(node->name);
+	  
 	  fs_node_t *fsnode = finddir_fs(fs_root, node->name);
 
 	  if ((fsnode->flags&0x7) == FS_DIRECTORY)
@@ -68,7 +72,12 @@ void _kmain(unsigned long magic, unsigned long addr)
     //volatile uint32_t *ptr = (uint32_t*)0xA0000000;
     //volatile uint32_t do_page_fault = *ptr;
 	for(;;) {
-	    asm("hlt");
+	    //asm("hlt");
+	    char *a = kmalloc(128);
+	    input(a);
+	    printf(a);
+	    kfree(a);
+	    newline();
 	}
 	//input(a);
 	//newline();

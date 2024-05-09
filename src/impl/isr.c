@@ -208,16 +208,18 @@ void fault_handler(struct regs *r)
         for (;;);
     }*/
 
-	void (*handler)(struct regs *r);
+   void (*handler)(struct regs *r);
 
    handler = irq_routines[r->int_no];
    if (handler)
    {
       handler(r);
+      printf("\nException. System Halted!\n");
+      for (;;);
    }
    else
    {
-   	printf(exception_messages[r->int_no]);
+      printf(exception_messages[r->int_no]);
       printf(" Exception. System Halted!\n");
       for (;;);
    }

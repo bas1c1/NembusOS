@@ -1,6 +1,6 @@
 #include "../include/memory.h"
 
-void *memset(void *s, int c,  unsigned int len){
+/*void *memset(void *s, int c,  unsigned int len){
     unsigned char* p=s;
     while(len--)
     {
@@ -15,7 +15,21 @@ void memcpy(void *dest, void *src, size_t n) {
    char *dest_char = (char *)dest;
    for (i=0; i<n; i++)
       dest_char[i] = src_char[i];
+}*/
+
+void memcpy(uint8_t *dest, const uint8_t *src, uint32_t len)
+{
+    const uint8_t *sp = (const uint8_t *)src;
+    uint8_t *dp = (uint8_t *)dest;
+    for(; len != 0; len--) *dp++ = *sp++;
 }
+
+void memset(uint8_t *dest, uint8_t val, uint32_t len)
+{
+    uint8_t *temp = (uint8_t *)dest;
+    for ( ; len != 0; len--) *temp++ = val;
+}
+
 char heap[heap_size];
 memory* head = NULL;
 

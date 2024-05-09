@@ -34,8 +34,10 @@ section .multiboot_header
 start:
 	mov esp, stack_space
 	mov eax, _BOOTLOADER_MAGIC
+    push esp
 	push ebx
     push eax
+
 	call _kmain
 
 section .bss

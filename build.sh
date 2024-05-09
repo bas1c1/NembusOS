@@ -42,6 +42,6 @@ sudo rm -rf build/kernel.o build/initrd.o build/vfs.o build/procasm.o build/asse
 
 sudo grub-mkrescue -o build/NembusOS.iso isodir
 
-sudo rm -rf isodir/NembusOS.bin isodir/initrd
+sudo rm -rf build/NembusOS.bin isodir/NembusOS.bin isodir/initrd
 
 qemu-system-i386 -cdrom build/NembusOS.iso -m 512 -cpu max -no-reboot -d int

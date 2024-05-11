@@ -25,7 +25,7 @@ nasm -f elf32 src/impl/interrupt.asm -o build/israsm.o
 nasm -f elf32 src/impl/process.asm -o build/procasm.o
 
 #build/syscall.o
-ld -T linker.ld -melf_i386 -o build/NembusOS.bin build/kernel.o  build/task.o build/initrd.o build/vfs.o build/procasm.o build/assert.o build/ordarray.o build/kheap.o build/paging.o build/isr.o build/timer.o build/israsm.o build/gdt.o build/gdtasm.o build/keyboard.o build/cmos.o build/boot.o build/string.o build/io.o build/memory.o build/vga.o build/std.o -build-id=none --ignore-unresolved-symbol _GLOBAL_OFFSET_TABLE_
+ld -T linker.ld -melf_i386 -o build/NembusOS.bin build/kernel.o build/task.o build/initrd.o build/vfs.o build/procasm.o build/assert.o build/ordarray.o build/kheap.o build/paging.o build/isr.o build/timer.o build/israsm.o build/gdt.o build/gdtasm.o build/keyboard.o build/cmos.o build/boot.o build/string.o build/io.o build/memory.o build/vga.o build/std.o -build-id=none --ignore-unresolved-symbol _GLOBAL_OFFSET_TABLE_
 
 if grub-file --is-x86-multiboot build/NembusOS.bin; then
   echo multiboot confirmed
@@ -40,7 +40,7 @@ sudo cp build/NembusOS.bin isodir/NembusOS.bin
 gcc ramdisk.c -o ramdisk.out
 sudo ./ramdisk.out initrd/a.txt hello.txt
 
-sudo rm -rf build/kernel.o build/initrd.o build/vfs.o build/procasm.o build/assert.o build/ordarray.o build/kheap.o build/paging.o build/isr.o build/timer.o build/israsm.o build/gdt.o build/gdtasm.o build/keyboard.o build/cmos.o build/boot.o build/string.o build/io.o build/memory.o build/vga.o build/std.o ramdisk.out
+sudo rm -rf build/kernel.o build/task.o build/initrd.o build/vfs.o build/procasm.o build/assert.o build/ordarray.o build/kheap.o build/paging.o build/isr.o build/timer.o build/israsm.o build/gdt.o build/gdtasm.o build/keyboard.o build/cmos.o build/boot.o build/string.o build/io.o build/memory.o build/vga.o build/std.o ramdisk.out
 
 sudo grub-mkrescue -o build/NembusOS.iso isodir
 

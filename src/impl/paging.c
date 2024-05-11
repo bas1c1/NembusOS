@@ -182,7 +182,7 @@ void page_fault(struct regs *regs)
     if (rw) {printf("read-only ");}
     if (us) {printf("user-mode ");}
     if (reserved) {printf("reserved ");}
-    printf(") at 0x");
+    printf(") at ");
     printfhex(faulting_address);
     printf(" - EIP: ");
     printfhex(regs->eip);

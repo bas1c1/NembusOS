@@ -1,4 +1,5 @@
 #include "../include/isr.h"
+#include "../include/assert.h"
 
 extern void irq0();
 extern void irq1();
@@ -47,6 +48,8 @@ void irq_remap(void)
     outportb(0xA1, 0x0);
 }
 
+extern void isr128();
+
 void irq_install()
 {
     irq_remap();
@@ -68,6 +71,7 @@ void irq_install()
     idt_set_gate(45, (unsigned)irq13, 0x08, 0x8E);
     idt_set_gate(46, (unsigned)irq14, 0x08, 0x8E);
     idt_set_gate(47, (unsigned)irq15, 0x08, 0x8E);
+    idt_set_gate(128, (unsigned)isr128, 0x08, 0x8E);
 }
 
 void irq_handler(struct regs *r)
@@ -199,28 +203,67 @@ char *exception_messages[] =
     "Reserved"
 };
 
+#include "../include/syscall.h"
+
+DEFN_SYSCALL1(printf, 0, const char*);
+DEFN_SYSCALL1(printfhex, 1, const char*);
+
+static void *syscalls[2] =
+{
+    &printf,
+    &printfhex,
+};
+
+uint32_t num_syscalls = 2;
+
 void fault_handler(struct regs *r)
 {
-    /*if (r->int_no < 32)
+    if (r->int_no == 0x80) {
+        if (r->eax >= num_syscalls)
+            return;
+
+        void *location = syscalls[r->eax];
+
+        int ret;
+        asm volatile (" \
+          push %1; \
+          push %2; \
+          push %3; \
+          push %4; \
+          push %5; \
+          call *%6; \
+          pop %%ebx; \
+          pop %%ebx; \
+          pop %%ebx; \
+          pop %%ebx; \
+          pop %%ebx; \
+        " : "=a" (ret) : "r" (r->edi), "r" (r->esi), "r" (r->edx), "r" (r->ecx), "r" (r->ebx), "r" (location));
+        r->eax = ret;
+    }
+
+    if (r->int_no >= 32 && r->int_no <= 47) {
+        if (r->int_no >= 40) {
+            outb(0xA0, 0x20);
+        }
+        outb(0x20, 0x20);
+
+        if (r->int_no == 32) {
+            timer_handler(r);
+        }
+    }
+    if (r->int_no < 32)
     {
-        printf(exception_messages[r->int_no]);
-        printf(" Exception. System Halted!\n");
-        for (;;);
-    }*/
+        void (*handler)(struct regs *r);
 
-   void (*handler)(struct regs *r);
-
-   handler = irq_routines[r->int_no];
-   if (handler)
-   {
-      handler(r);
-      printf("\nException. System Halted!\n");
-      for (;;);
-   }
-   else
-   {
-      printf(exception_messages[r->int_no]);
-      printf(" Exception. System Halted!\n");
-      for (;;);
-   }
+        handler = irq_routines[r->int_no];
+        if (handler)
+        {
+            handler(r);
+        }
+        else
+        {
+            printf(exception_messages[r->int_no]);
+            PANIC(" Exception. System Halted!\n");
+        }
+    }
 }

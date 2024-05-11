@@ -2,12 +2,18 @@
 #include "../include/isr.h"
 #include "../include/vga.h"
 #include "../include/gdt.h"
+#include "../include/task.h"
 
 int timer_ticks = 0;
 
 void timer_handler(struct regs *r)
 {
     timer_ticks++;
+    //syscall_printf("\n");
+    //syscall_printfhex(getpid());
+    //syscall_printf("\n");
+    switch_task();
+
 
     //if (timer_ticks % 18 == 0)
     //{

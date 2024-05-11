@@ -17,13 +17,15 @@ gcc -c -m32 src/impl/ordered_array.c -o build/ordarray.o -std=gnu99 -ffreestandi
 gcc -c -m32 src/impl/assert.c -o build/assert.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
 gcc -c -m32 src/impl/vfs.c -o build/vfs.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
 gcc -c -m32 src/impl/initrd.c -o build/initrd.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+gcc -c -m32 src/impl/task.c -o build/task.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
+#gcc -c -m32 src/impl/syscall.c -o build/syscall.o -std=gnu99 -ffreestanding -O2 -Wall -Wextra
 
 nasm -f elf32 src/impl/gdt.asm -o build/gdtasm.o
 nasm -f elf32 src/impl/interrupt.asm -o build/israsm.o
 nasm -f elf32 src/impl/process.asm -o build/procasm.o
 
-
-ld -T linker.ld -melf_i386 -o build/NembusOS.bin build/kernel.o build/initrd.o build/vfs.o build/procasm.o build/assert.o build/ordarray.o build/kheap.o build/paging.o build/isr.o build/timer.o build/israsm.o build/gdt.o build/gdtasm.o build/keyboard.o build/cmos.o build/boot.o build/string.o build/io.o build/memory.o build/vga.o build/std.o -build-id=none --ignore-unresolved-symbol _GLOBAL_OFFSET_TABLE_
+#build/syscall.o
+ld -T linker.ld -melf_i386 -o build/NembusOS.bin build/kernel.o  build/task.o build/initrd.o build/vfs.o build/procasm.o build/assert.o build/ordarray.o build/kheap.o build/paging.o build/isr.o build/timer.o build/israsm.o build/gdt.o build/gdtasm.o build/keyboard.o build/cmos.o build/boot.o build/string.o build/io.o build/memory.o build/vga.o build/std.o -build-id=none --ignore-unresolved-symbol _GLOBAL_OFFSET_TABLE_
 
 if grub-file --is-x86-multiboot build/NembusOS.bin; then
   echo multiboot confirmed

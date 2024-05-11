@@ -41,5 +41,5 @@ start:
 	call _kmain
 
 section .bss
-resb 8192; 8KB for stack
+resb 16384; 8KB for stack
 stack_space:

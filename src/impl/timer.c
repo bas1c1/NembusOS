@@ -9,16 +9,7 @@ int timer_ticks = 0;
 void timer_handler(struct regs *r)
 {
     timer_ticks++;
-    //syscall_printf("\n");
-    //syscall_printfhex(getpid());
-    //syscall_printf("\n");
     switch_task();
-
-
-    //if (timer_ticks % 18 == 0)
-    //{
-    //    printf("One second has passed\n");
-    //}
 }
 
 void timer_wait(int ticks)

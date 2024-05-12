@@ -14,50 +14,20 @@
 #include "../include/task.h"
 #include "../include/syscall.h"
 
-#define MEGABYTE(N) 1048576*N
+//bruh why i defined it
+//#define MEGABYTE(N) 1048576*N
 
 extern uint32_t placement_address;
 
 uint32_t initial_esp;
 
 void proc() {
-	int ret = fork();
-	printf("fork() returned ");
-   	printfhex(ret);
-   	printf(", and getpid() returned ");
-   	printfhex(getpid());
-   	newline();
-   	newline();
-
-   	asm volatile("cli");
-
-    // list the contents of /
-	int i = 0;
-	struct dirent *node = 0;
-	while ( (node = readdir_fs(fs_root, i)) != 0)
-	{
-	  printf("Found file ");
-	  printf(node->name);
-	  
-	  fs_node_t *fsnode = finddir_fs(fs_root, node->name);
-
-	  if ((fsnode->flags&0x7) == FS_DIRECTORY)
-	    printf("\n     (directory)\n");
-	  else
-	  {
-	    printf("\n     contents: \"");
-	    char buf[256];
-	    uint32_t sz = read_fs(fsnode, 0, 256, buf);
-	    int j;
-	    for (j = 0; j < sz; j++)
-	      putchar(buf[j]);
-
-	    printf("\"\n");
-	  }
-	  i++;
+	for (;;) {
+    	printf("\nHello from proc ");
+    	printfhex(getpid());
+    	newline();
+    	switch_task();
 	}
-
-	asm volatile("sti");
 }
 
 void _kmain(unsigned long magic, unsigned long addr, uint32_t initial_stack)
@@ -89,33 +59,17 @@ void _kmain(unsigned long magic, unsigned long addr, uint32_t initial_stack)
 
 	initialise_tasking();
 	
-	//fs_root = initialise_initrd(initrd_location);
+	fs_root = initialise_initrd(initrd_location);
+
+	//not working in user mode :(
+	create_proc(&proc);
+	create_proc(&proc);
+
+	switch_to_user_mode();
 	
-	//proc();
-
-	//fork();
-
 	syscall_printf("Hello, syscalls!\n");
-    
 
 	for(;;) {
-		asm ("hlt");
-		//syscall_printf("Hello, user world! - pid = ");
-		//syscall_printfhex(getpid());
-		//syscall_printf("\n");
+		//asm ("hlt");
 	}
-
-    //volatile uint32_t *ptr = (uint32_t*)0xA0000000;
-    //volatile uint32_t do_page_fault = *ptr;
-	/*for(;;) {
-	    //asm("hlt");
-	    char *a = kmalloc(128);
-	    input(a);
-	    printf(a);
-	    kfree(a);
-	    newline();
-	}*/
-	//input(a);
-	//newline();
-	//printf(a);
 }

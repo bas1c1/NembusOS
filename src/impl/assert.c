@@ -4,6 +4,7 @@ void PANIC(char *message) {
 	printf(message);
 	newline();
 	for(;;) {
-		asm("hlt");
+		//idk bro
+		//asm("hlt");
 	}
 }

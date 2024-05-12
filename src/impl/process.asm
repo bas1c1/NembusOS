@@ -39,11 +39,31 @@ copy_page_physical:
 [GLOBAL perform_task_switch]
 perform_task_switch:
     cli;
-    mov ecx, [esp+4]   ; EIP
-    mov eax, [esp+8]   ; physical address of current directory
-    mov ebp, [esp+12]  ; EBP
-    mov esp, [esp+16]  ; ESP
-    mov cr3, eax       ; set the page directory
-    mov eax, 0x12345   ; magic number to detect a task switch
+    mov ecx, [esp+4]      ; EIP
+    mov eax, [esp+8]      ; physical address of current directory
+    mov ebp, [esp+12]     ; EBP
+    mov esp, [esp+16]     ; ESP
+    mov cr3, eax          ; set the page directory
+    mov eax, 0x31415926   ; yeeeeee pi number
     sti;
     jmp ecx
+
+global switch_to_user
+switch_to_user:
+    mov ax, 0x23
+    mov ds, ax
+    mov es, ax
+    mov fs, ax
+    mov gs, ax
+
+    push 0x23
+    push esp
+    pushfd
+    ; code segment selector, rpl = 3
+    push 0x1b
+    lea eax, [user_start]
+    push eax
+    iretd
+user_start:
+    add esp, 4
+    ret

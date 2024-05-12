@@ -76,8 +76,9 @@ void switch_task()
     asm volatile("mov %%ebp, %0" : "=r"(ebp));
 
     eip = read_eip();
-
-    if (eip == 0x12345)
+    
+    //i know this is shit but who cares
+    if (eip == 0x31415926)
         return;
 
     current_task->eip = eip;
@@ -98,12 +99,55 @@ void switch_task()
     perform_task_switch(eip, current_directory->physicalAddr, ebp, esp);
 }
 
+int create_proc(uint32_t routine)
+{
+    asm volatile("cli");
+
+    task_t *parent_task = (task_t*)current_task;
+
+    //this piece of shit not working in user mode and idk why
+    page_directory_t *directory = clone_directory(current_directory);
+
+    task_t *new_task = (task_t*)kmalloc(sizeof(task_t));
+    new_task->id = next_pid++;
+    new_task->esp = new_task->ebp = 0;
+    new_task->eip = (uint32_t)routine;
+    new_task->page_directory = directory;
+    current_task->kernel_stack = kmalloc_a(KERNEL_STACK_SIZE);
+    new_task->next = 0;
+
+    task_t *tmp_task = (task_t*)ready_queue;
+    while (tmp_task->next)
+        tmp_task = tmp_task->next;
+
+    tmp_task->next = new_task;
+
+    //uint32_t eip = read_eip();
+
+    if (current_task == parent_task)
+    {
+
+        uint32_t esp; asm volatile("mov %%esp, %0" : "=r"(esp));
+        uint32_t ebp; asm volatile("mov %%ebp, %0" : "=r"(ebp));
+        new_task->esp = esp;
+        new_task->ebp = ebp;
+        //new_task->eip = eip;
+        asm volatile("sti");
+        return new_task->id;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
 int fork()
 {
     asm volatile("cli");
 
     task_t *parent_task = (task_t*)current_task;
 
+    //this piece of shit not working in user mode and idk why
     page_directory_t *directory = clone_directory(current_directory);
 
     task_t *new_task = (task_t*)kmalloc(sizeof(task_t));
@@ -124,46 +168,28 @@ int fork()
 
     if (current_task == parent_task)
     {
+
         uint32_t esp; asm volatile("mov %%esp, %0" : "=r"(esp));
         uint32_t ebp; asm volatile("mov %%ebp, %0" : "=r"(ebp));
         new_task->esp = esp;
         new_task->ebp = ebp;
         new_task->eip = eip;
         asm volatile("sti");
-
         return new_task->id;
     }
     else
     {
         return 0;
     }
-
 }
 
 int getpid() { return current_task->id; }
 
-//extern void switch_to_user();
+extern void switch_to_user();
 
-/*void switch_to_user_mode()
+void switch_to_user_mode()
 {
     set_kernel_stack(current_task->kernel_stack+KERNEL_STACK_SIZE);
     
-     asm volatile("  \
-      cli; \
-      mov $0x23, %ax; \
-      mov %ax, %ds; \
-      mov %ax, %es; \
-      mov %ax, %fs; \
-      mov %ax, %gs; \
-                    \
-       \
-      mov %esp, %eax; \
-      pushl $0x23; \
-      pushl %esp; \
-      pushf; \
-      pushl $0x1B; \
-      push $1f; \
-      iret; \
-    1: \
-      ");
-}*/
+    switch_to_user();
+}

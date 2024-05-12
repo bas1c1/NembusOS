@@ -246,10 +246,6 @@ void fault_handler(struct regs *r)
             outb(0xA0, 0x20);
         }
         outb(0x20, 0x20);
-
-        if (r->int_no == 32) {
-            timer_handler(r);
-        }
     }
     if (r->int_no < 32)
     {

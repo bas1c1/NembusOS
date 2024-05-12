@@ -21,9 +21,10 @@ typedef struct task
 } task_t;
 
 void initialise_tasking();
+int create_proc(uint32_t routine);
 int fork();
 void move_stack(void *new_stack_start, uint32_t size);
 int getpid();
-//void switch_to_user_mode();
+void switch_to_user_mode();
 
 #endif
